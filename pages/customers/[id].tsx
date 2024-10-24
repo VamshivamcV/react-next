@@ -1,8 +1,12 @@
 import { useRouter } from "next/router";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import { Customer } from ".";
-import axios, { AxiosError } from "axios";
+// import axios, { AxiosError } from "axios";
 import { ParsedUrlQuery } from "querystring";
+import clientPromise from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
+import { BSONError } from "bson";
+import { getCustomer } from "../api/customers/[id]";
 
 type Props = {
   customer?: Customer;
@@ -13,20 +17,19 @@ interface Params extends ParsedUrlQuery {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-//   const result = await axios.get("http://127.0.0.1:8000/api/customers/");
+  //   const result = await axios.get("http://127.0.0.1:8000/api/customers/");
 
-//   const paths = result.data.customers.map((customer: Customer) => {
-//     console.log(customer.id);
-//     return { params: { id: customer.id.toString() } };
-//   });
+  //   const paths = result.data.customers.map((customer: Customer) => {
+  //     console.log(customer.id);
+  //     return { params: { id: customer.id.toString() } };
+  //   });
 
   return {
-    paths: [] 
+    paths: [],
     // paths
-    ,
-    fallback: 
-    // "blocking"
-    true
+    fallback:
+      // "blocking"
+      true,
   };
 };
 
@@ -36,28 +39,49 @@ export const getStaticProps: GetStaticProps<Props, Params> = async (
   const params = context.params!;
 
   try {
-    const result = await axios.get<{ customer: Customer }>(
-      `http://127.0.0.1:8000/api/customers/${params.id}`
-    );
+    // const mongoClient = await clientPromise;
+
+    // const data = await mongoClient
+    //   .db()
+    //   .collection("customerss")
+    //   .findOne({"_id": new ObjectId(params.id)}) as Customer;
+    const data = await getCustomer(params.id);
+    console.log("!!!", data);
+
+    if(!data){
+        return {
+            notFound: true ,
+            revalidate: 60
+        }
+    }
+
+    // const result = await axios.get<{ customer: Customer }>(
+    //   `http://127.0.0.1:8000/api/customers/${params.id}`
+    // );
 
     return {
       props: {
-        customer: result.data.customer,
+        customer: JSON.parse(JSON.stringify(data)),
+
+        // customer: result.data.customer,
       },
       revalidate: 60,
     };
   } catch (err) {
-    if (err instanceof AxiosError) {
-        if(err.response?.status === 404){
-            return {
-                notFound: true,
-                revalidate: 60
-            };
-        }
+    if (err instanceof BSONError
+        // AxiosError
+    ) {
+    //   if (err.response?.status === 404) {
+        return {
+          notFound: true,
+        //   revalidate: 60,
+        };
+    //   }
     }
+    // throw err
     return {
-        props: {}
-    }
+      props: {},
+    };
   }
 };
 
@@ -66,7 +90,7 @@ const Customers: NextPage<Props> = (props) => {
   if (router.isFallback) {
     return <p>Loading...</p>;
   }
-  return <h1>Customer {props.customer? props.customer.name: null}</h1>;
+  return <h1>{props.customer ? "Customer " + props.customer.name : "Page Not Found"}</h1>;
 };
 
 export default Customers;
