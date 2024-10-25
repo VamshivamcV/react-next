@@ -3,8 +3,8 @@ import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import { Customer } from ".";
 // import axios, { AxiosError } from "axios";
 import { ParsedUrlQuery } from "querystring";
-import clientPromise from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
+// import clientPromise from "@/lib/mongodb";
+// import { ObjectId } from "mongodb";
 import { BSONError } from "bson";
 import { getCustomer } from "../api/customers/[id]";
 
