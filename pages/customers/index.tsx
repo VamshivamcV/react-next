@@ -1,10 +1,12 @@
 import type { InferGetStaticPropsType, GetStaticProps, NextPage } from "next";
-// import axios from "axios";
-import { 
-  // MongoClient, 
-  ObjectId } from "mongodb";
+import axios from "axios";
+import {
+  // MongoClient,
+  ObjectId,
+} from "mongodb";
 // import clientPromise from "@/lib/mongodb";
 import { getCustomers } from "../api/customers";
+import { useQuery } from "@tanstack/react-query";
 
 export type Customer = {
   _id?: ObjectId;
@@ -33,11 +35,21 @@ export const getStaticProps: GetStaticProps = async () => {
 const Customers: NextPage = ({
   customers,
 }: InferGetStaticPropsType<typeof getStaticProps>) => {
-  console.log(customers);
+  // console.log(customers);
+  const query = useQuery({
+    queryKey: ["customers"],
+    queryFn: () =>  axios("/api/customers") as any,
+    initialData: {
+      data: {
+        customers: customers
+      }
+    },
+  });
+  console.log(customers, query);
   return (
     <>
       <h1>Customers</h1>
-      {customers.map((customer: Customer) => {
+      {query.data.data.customers.map((customer: Customer) => {
         return (
           <div key={customer._id?.toString()}>
             <p>{customer._id?.toString()}</p>
