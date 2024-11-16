@@ -1,7 +1,7 @@
 import clientPromise from "@/lib/mongodb";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { Customer } from "@/pages/customers";
-import { ObjectId } from "bson";
+import { Customer, Order } from "@/pages/customers";
+import { ObjectId } from "mongodb";
 import NextCors from "nextjs-cors";
 
 type Return = {
@@ -45,6 +45,9 @@ export default async (
       const customer: Customer = {
         name: req.body.name,
         industry: req.body.industry,
+        orders: req.body.orders.map((order: Order) => {
+          return {...order, _id: new ObjectId()}
+        })
       };
       const insertedId = await addCustomer(customer);
       res.revalidate("/customers");

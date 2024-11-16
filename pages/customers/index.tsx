@@ -1,4 +1,6 @@
-import type { InferGetStaticPropsType, GetStaticProps, NextPage } from "next";
+import type {
+  //  InferGetStaticPropsType,
+   GetStaticProps, NextPage } from "next";
 import axios from "axios";
 import {
   // MongoClient,
@@ -7,14 +9,28 @@ import {
 // import clientPromise from "@/lib/mongodb";
 import { getCustomers } from "../api/customers";
 import { useQuery } from "@tanstack/react-query";
+import CustomerComponent from "@/components/Customer";
+import Grid from "@mui/material/Grid"
+import { Container } from "@mui/material";
+
+export type Order = {
+  description: string;
+  price: {$numberDecimal: number};
+  _id: ObjectId;
+}
 
 export type Customer = {
   _id?: ObjectId;
   name: string;
   industry: string;
+  orders?: Order[];
 };
 
-export const getStaticProps: GetStaticProps = async () => {
+type Props = {
+  customers: Customer[];
+}
+
+export const getStaticProps: GetStaticProps<Props> = async () => {
   const data = await getCustomers();
   console.log("!!!", data);
 
@@ -32,33 +48,25 @@ export const getStaticProps: GetStaticProps = async () => {
   };
 };
 
-const Customers: NextPage = ({
-  customers,
-}: InferGetStaticPropsType<typeof getStaticProps>) => {
-  // console.log(customers);
-  const query = useQuery({
+const Customers: NextPage<Props> = ({
+  customers: c
+}) => {
+  console.log(c);
+  const { data: {data: { customers = c} = {}} = {}} = useQuery({
     queryKey: ["customers"],
-    queryFn: () =>  axios("/api/customers") as any,
-    initialData: {
-      data: {
-        customers: customers
-      }
-    },
+    queryFn: () => axios("/api/customers")
   });
-  console.log(customers, query);
+
   return (
-    <>
-      <h1>Customers</h1>
-      {query.data.data.customers.map((customer: Customer) => {
-        return (
-          <div key={customer._id?.toString()}>
-            <p>{customer._id?.toString()}</p>
-            <p>{customer.name}</p>
-            <p>{customer.industry}</p>
-          </div>
-        );
-      })}
-    </>
+    <Container>
+      <Grid container spacing={5} sx={{mt: 1}}>
+        {customers.map((customer: Customer) => {
+          return (
+            <CustomerComponent key={customer._id?.toString()} customer={customer}/>
+          );
+        })}
+      </Grid>
+    </Container>
   );
 };
 
